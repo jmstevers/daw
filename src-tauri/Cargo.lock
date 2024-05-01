@@ -369,9 +369,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.96"
+version = "1.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "065a29261d53ba54260972629f9ca6bffa69bac13cd1fed61420f7fa68b9f8bd"
+checksum = "d32a725bc159af97c3e629873bb9f88fb8cf8a4867175f76dc987815ea07c83b"
 dependencies = [
  "jobserver",
  "libc",
@@ -2112,7 +2112,7 @@ version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "681030a937600a36906c185595136d26abfebb4aa9c65701cefcaf8578bb982b"
 dependencies = [
- "proc-macro-crate 3.1.0",
+ "proc-macro-crate 2.0.0",
  "proc-macro2",
  "quote",
  "syn 2.0.60",
@@ -2478,15 +2478,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e8366a6159044a37876a2b9817124296703c586a5c92e2c53751fa06d8d43e8"
 dependencies = [
  "toml_edit 0.20.7",
-]
-
-[[package]]
-name = "proc-macro-crate"
-version = "3.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d37c51ca738a55da99dc0c4a34860fd675453b8b36209178c2249bb13651284"
-dependencies = [
- "toml_edit 0.21.1",
 ]
 
 [[package]]
@@ -3259,9 +3250,9 @@ checksum = "e1fc403891a21bcfb7c37834ba66a547a8f402146eba7265b5a6d88059c9ff2f"
 
 [[package]]
 name = "tauri"
-version = "2.0.0-beta.17"
+version = "2.0.0-beta.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fedd5490eddf117253945f0baedafded43474c971cba546a818f527d5c26266"
+checksum = "4d411ebb670bbe5cf948f6c24978632937329748b499de1619ab55ad31512652"
 dependencies = [
  "anyhow",
  "bytes",
@@ -3273,7 +3264,7 @@ dependencies = [
  "getrandom 0.2.14",
  "glob",
  "gtk",
- "heck 0.5.0",
+ "heck 0.4.1",
  "http",
  "jni",
  "libc",
@@ -3371,9 +3362,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-runtime"
-version = "2.0.0-beta.14"
+version = "2.0.0-beta.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "148b6e6aff8e63fe5d4ae1d50159d50cfc0b4309abdeca64833c887c6b5631ef"
+checksum = "c7439729d0107c9797764919c39c4a4cc3af64306faaa48271da50d8eb4c0283"
 dependencies = [
  "dpi",
  "gtk",
@@ -3390,9 +3381,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-runtime-wry"
-version = "2.0.0-beta.14"
+version = "2.0.0-beta.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "398d065c6e0fbf3c4304583759b6e153bc1e0daeb033bede6834ebe4df371fc3"
+checksum = "0c38dcfa7f8c2b2e344c7401972e0ddaaec4fa655666788d94b1852d6c4a7fe8"
 dependencies = [
  "cocoa",
  "gtk",
@@ -3631,17 +3622,6 @@ name = "toml_edit"
 version = "0.20.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70f427fce4d84c72b5b732388bf4a9f4531b53f74e2887e3ecb2481f68f66d81"
-dependencies = [
- "indexmap 2.2.6",
- "toml_datetime",
- "winnow 0.5.40",
-]
-
-[[package]]
-name = "toml_edit"
-version = "0.21.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a8534fd7f78b5405e860340ad6575217ce99f38d4d5c8f2442cb5ecb50090e1"
 dependencies = [
  "indexmap 2.2.6",
  "toml_datetime",
