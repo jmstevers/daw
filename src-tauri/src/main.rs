@@ -3,13 +3,17 @@
 
 mod audio;
 
-use crate::audio::{play_sound, record_sound};
+use crate::audio::{play_sound, start_recording};
 use macros::tauri_anyhow;
 use tauri::generate_handler;
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(generate_handler![create_window, play_sound, record_sound])
+        .invoke_handler(generate_handler![
+            create_window,
+            play_sound,
+            start_recording
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

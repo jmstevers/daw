@@ -10,6 +10,7 @@ use std::{
     io::BufWriter,
     sync::{Arc, Mutex},
 };
+use tauri::Manager;
 
 #[derive(Parser, Debug)]
 #[command(version, about = "CPAL beep example", long_about = None)]
@@ -73,7 +74,7 @@ pub async fn play_sound() -> anyhow::Result<()> {
 
 #[tauri::command]
 #[tauri_anyhow]
-pub async fn record_sound(app: tauri::AppHandle) -> anyhow::Result<()> {
+pub async fn start_recording(app: tauri::AppHandle) -> anyhow::Result<()> {
     let setup = setup_audio_devices()?;
 
     match setup.input_config.sample_format() {
@@ -212,7 +213,7 @@ where
     T: cpal::Sample + SizedSample + hound::Sample + FromSample<T>,
 {
     // The WAV file we're recording to.
-    const PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/recorded.wav");
+    const PATH: &str = "../assets/recorded.wav";
     let spec = hound::WavSpec {
         channels: input_config.channels() as _,
         sample_rate: input_config.sample_rate().0 as _,
@@ -236,6 +237,8 @@ where
         eprintln!("an error occurred on stream: {}", err);
     };
 
+    let (tx, rx) = std::sync::mpsc::channel();
+
     let stream = input.build_input_stream(
         &input_config.clone().into(),
         move |data, _: &_| write_input_data::<T, T>(data, &writer_2),
@@ -245,11 +248,15 @@ where
 
     stream.play()?;
 
-    // Let recording go for roughly three seconds.
-    std::thread::sleep(std::time::Duration::from_secs(3));
+    app.once_any("stop_recording", move |_| {
+        tx.send(()).unwrap();
+    });
+
+    rx.recv().unwrap();
     drop(stream);
-    writer.lock().unwrap().take().unwrap().finalize()?;
+    writer.lock().unwrap().take().unwrap().finalize().unwrap();
     println!("Recording {} complete!", PATH);
+
     Ok(())
 }
 
