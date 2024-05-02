@@ -1,36 +1,79 @@
-<script>
+<script lang="ts">
     import { Button } from "$lib/components/ui/button";
-    import { invoke } from "@tauri-apps/api/core";
-    import { emit } from "@tauri-apps/api/event";
-    import { Square } from "lucide-svelte";
+    import { commands, events, type ValueLabel } from "$lib/bindings";
+    import Combobox from "$lib/components/combobox.svelte";
 
     let recording = $state(false);
 
-    async function start_recording() {
-        recording = true;
-        await invoke("start_recording");
+    async function getInputDevices(): Promise<ValueLabel[] | null> {
+        const devices = await commands.getInputDevices();
+
+        if (devices.status === "ok") {
+            return devices.data;
+        } else {
+            return null;
+        }
     }
 
-    async function stop_recording() {
-        recording = false;
-        await emit("stop_recording");
+    async function getOutputDevices(): Promise<ValueLabel[] | null> {
+        const devices = await commands.getOutputDevices();
+
+        if (devices.status === "ok") {
+            return devices.data;
+        } else {
+            return null;
+        }
     }
+
+    $effect(() => {
+        events.stopRecording.once((cb) => {
+            console.log(cb.event);
+        });
+    });
 </script>
 
-<Button onclick={async () => await invoke("create_window")}>Open Window</Button>
-<Button onclick={async () => await invoke("play_sound")}>Play Sound</Button>
-<Button
-    onclick={async () => {
-        if (recording) {
-            await stop_recording();
-        } else {
-            await start_recording();
-        }
-    }}
->
-    {#if recording}
-        Stop Recording
-    {:else}
-        Start Recording
-    {/if}
-</Button>
+<main class="flex h-screen flex-col items-center justify-center gap-4">
+    <Button onclick={async () => await commands.createWindow()}>Open Window</Button>
+    <Button onclick={async () => await commands.beep()}>Play Sound</Button>
+    <Button
+        onclick={async () => {
+            if (recording) {
+                recording = false;
+                await events.stopRecording.emit();
+            } else {
+                recording = true;
+                await commands.record();
+            }
+        }}
+    >
+        {#if recording}
+            Stop Recording
+        {:else}
+            Start Recording
+        {/if}
+    </Button>
+
+    {#await getInputDevices()}
+        <p>Loading...</p>
+    {:then devices}
+        <Combobox
+            data={devices}
+            placeholder="Select an input device"
+            inputPlaceholder="Search input devices..."
+        />
+    {:catch error}
+        <p>{error.message}</p>
+    {/await}
+
+    {#await getOutputDevices()}
+        <p>Loading...</p>
+    {:then devices}
+        <Combobox
+            data={devices}
+            placeholder="Select an output device"
+            inputPlaceholder="Search output devices..."
+        />
+    {:catch error}
+        <p>{error.message}</p>
+    {/await}
+</main>
