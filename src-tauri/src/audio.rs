@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     Device, Host, StreamConfig, SupportedStreamConfig,
@@ -48,8 +48,17 @@ impl Default for AudioDevices {
 #[specta]
 #[tauri_anyhow]
 pub async fn beep(audio_devices: State<AudioDevices>) -> Result<()> {
-    let device = audio_devices.output.read().unwrap().clone();
-    let config: StreamConfig = audio_devices.output_config.read().unwrap().clone().into();
+    let device = audio_devices
+        .output
+        .read()
+        .map_err(|e| anyhow!("{:?}", e))?
+        .clone();
+    let config: StreamConfig = audio_devices
+        .output_config
+        .read()
+        .map_err(|e| anyhow!("{:?}", e))?
+        .clone()
+        .into();
 
     let sample_rate = config.sample_rate.0 as f32;
     let channels = config.channels as usize;
@@ -58,7 +67,7 @@ pub async fn beep(audio_devices: State<AudioDevices>) -> Result<()> {
     let mut sample_clock = 0.0;
     let mut next_value = move || {
         sample_clock = (sample_clock + 1.0) % sample_rate;
-        (sample_clock * 440.0 * 2.0 * std::f32::consts::PI / sample_rate).sin() / 10.0
+        (sample_clock * 440.0 * 2.0 * std::f32::consts::PI / sample_rate).sin()
     };
 
     let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
@@ -91,10 +100,17 @@ pub struct StopRecording(());
 #[specta]
 #[tauri_anyhow]
 pub async fn record(app: tauri::AppHandle, audio_devices: State<AudioDevices>) -> Result<()> {
-    let device = audio_devices.input.read().unwrap().clone();
-    let config = audio_devices.input_config.read().unwrap().clone();
+    let device = audio_devices
+        .input
+        .read()
+        .map_err(|e| anyhow!("{:?}", e))?
+        .clone();
 
-    println!("{:?}", config.channels());
+    let config = audio_devices
+        .input_config
+        .read()
+        .map_err(|e| anyhow!("{:?}", e))?
+        .clone();
 
     // The WAV file we're recording to.
     const PATH: &str = "../assets/recorded.wav";
@@ -104,11 +120,12 @@ pub async fn record(app: tauri::AppHandle, audio_devices: State<AudioDevices>) -
         bits_per_sample: (config.sample_format().sample_size() * 8) as _,
         sample_format: hound::SampleFormat::Float,
     };
-    let writer = hound::WavWriter::create(PATH, spec)?;
+    let writer = hound::WavWriter::create(PATH, spec).unwrap();
+
     let writer = Arc::new(Mutex::new(Some(writer)));
 
     // A flag to indicate that recording is in progress.
-    println!("Begin recording...");
+    println!("Begin recording..");
 
     // Run the input stream on a separate thread.
     let writer_2 = writer.clone();
@@ -158,7 +175,7 @@ pub struct ValueLabel {
 #[tauri::command]
 #[specta]
 #[tauri_anyhow]
-pub fn get_input_devices(audio_devices: State<AudioDevices>) -> Result<Vec<ValueLabel>> {
+pub async fn get_input_devices(audio_devices: State<AudioDevices>) -> Result<Vec<ValueLabel>> {
     Ok(audio_devices
         .host
         .read()
@@ -175,7 +192,7 @@ pub fn get_input_devices(audio_devices: State<AudioDevices>) -> Result<Vec<Value
 #[tauri::command]
 #[specta]
 #[tauri_anyhow]
-pub fn get_output_devices(audio_devices: State<AudioDevices>) -> Result<Vec<ValueLabel>> {
+pub async fn get_output_devices(audio_devices: State<AudioDevices>) -> Result<Vec<ValueLabel>> {
     Ok(audio_devices
         .host
         .read()
@@ -192,10 +209,87 @@ pub fn get_output_devices(audio_devices: State<AudioDevices>) -> Result<Vec<Valu
 #[tauri::command]
 #[specta]
 #[tauri_anyhow]
-pub fn get_current_output_device(audio_devices: State<AudioDevices>) -> Result<ValueLabel> {
-    let name = audio_devices.output.read().unwrap().name()?;
+pub async fn get_current_output_device(audio_devices: State<AudioDevices>) -> Result<ValueLabel> {
+    let name = audio_devices
+        .output
+        .read()
+        .map_err(|e| anyhow!("{:?}", e))?
+        .name()?;
     Ok(ValueLabel {
         value: name.clone(),
         label: name,
     })
+}
+
+#[tauri::command]
+#[specta]
+#[tauri_anyhow]
+pub async fn get_current_input_device(audio_devices: State<AudioDevices>) -> Result<ValueLabel> {
+    let name = audio_devices
+        .input
+        .read()
+        .map_err(|e| anyhow!("{:?}", e))?
+        .name()?;
+    Ok(ValueLabel {
+        value: name.clone(),
+        label: name,
+    })
+}
+
+#[tauri::command]
+#[specta]
+#[tauri_anyhow]
+pub async fn set_output_device(
+    audio_devices: State<AudioDevices>,
+    device_name: String,
+) -> Result<()> {
+    let mut device = audio_devices
+        .output
+        .write()
+        .map_err(|e| anyhow!("{:?}", e))?;
+
+    *device = audio_devices
+        .host
+        .read()
+        .map_err(|e| anyhow!("{:?}", e))?
+        .output_devices()?
+        .find(|d| {
+            if let Ok(name) = d.name() {
+                name == device_name
+            } else {
+                false
+            }
+        })
+        .ok_or(anyhow!("no device found"))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+#[specta]
+#[tauri_anyhow]
+pub async fn set_input_device(
+    audio_devices: State<AudioDevices>,
+    device_name: String,
+) -> Result<()> {
+    let mut device = audio_devices
+        .input
+        .write()
+        .map_err(|e| anyhow!("{:?}", e))?;
+
+    *device = audio_devices
+        .host
+        .read()
+        .map_err(|e| anyhow!("{:?}", e))?
+        .input_devices()?
+        .find(|d| {
+            if let Ok(name) = d.name() {
+                name == device_name
+            } else {
+                false
+            }
+        })
+        .ok_or(anyhow!("no device found"))?;
+
+    Ok(())
 }

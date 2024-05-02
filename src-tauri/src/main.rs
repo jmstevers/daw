@@ -3,10 +3,11 @@
 
 mod audio;
 
-use crate::audio::{beep, get_input_devices, get_output_devices, record, StopRecording};
+use crate::audio::*;
 use anyhow::Result;
 use macros::tauri_anyhow;
 use specta::specta;
+use tauri::Manager;
 
 fn main() {
     let (invoke_handler, register_events) = {
@@ -16,7 +17,11 @@ fn main() {
                 get_input_devices,
                 get_output_devices,
                 record,
-                create_window
+                create_window,
+                get_current_input_device,
+                get_current_output_device,
+                set_input_device,
+                set_output_device
             ])
             .events(tauri_specta::collect_events![StopRecording]);
 
@@ -50,4 +55,16 @@ async fn create_window(app: tauri::AppHandle) -> Result<()> {
     .build()?;
 
     Ok(())
+}
+
+#[tauri::command]
+#[specta]
+#[tauri_anyhow]
+async fn get_all_recordings() -> Result<Vec<String>> {
+    let path = "../assets";
+
+    Ok(std::fs::read_dir(path)?
+        .flatten()
+        .map(|x| x.path().to_string_lossy().to_string())
+        .collect())
 }

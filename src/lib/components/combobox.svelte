@@ -9,13 +9,21 @@
     import type { ValueLabel } from "$lib/bindings";
 
     let {
-        data,
-        placeholder,
-        inputPlaceholder,
-    }: { data: ValueLabel[] | null; placeholder: string; inputPlaceholder: string } = $props();
+        data = [],
+        defaultValue = null,
+        placeholder = "Select an item",
+        inputPlaceholder = "Search items...",
+        onSelect = (value: string) => {},
+    }: {
+        data: ValueLabel[];
+        defaultValue: ValueLabel | null;
+        placeholder: string;
+        inputPlaceholder: string;
+        onSelect: (value: string) => void;
+    } = $props();
 
     let open = $state(false);
-    let value = $state("");
+    let value = $state(defaultValue?.value ?? null);
 
     let selectedValue = $derived(data?.find((f) => f.value === value)?.label ?? placeholder);
 
@@ -54,6 +62,7 @@
                         onSelect={(currentValue) => {
                             value = currentValue;
                             closeAndFocusTrigger(ids.trigger);
+                            onSelect?.(currentValue);
                         }}
                     >
                         <Check
